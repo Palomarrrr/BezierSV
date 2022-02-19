@@ -83,21 +83,21 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox2, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox3, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox4, 0, 0, 0);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox1), entryStartTime);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox1), label);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox1), entryEndTime);
+	gtk_box_pack_start(GTK_BOX(hbox1), entryStartTime, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox1), label, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox1), entryEndTime, 0, 0, 0);
 
-	gtk_box_pack_start_defaults(GTK_BOX(hbox2), entryBezP1);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox2), label2);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox2), entryBezP4);
+	gtk_box_pack_start(GTK_BOX(hbox2), entryBezP1,0 ,0 ,0);
+	gtk_box_pack_start(GTK_BOX(hbox2), label2, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox2), entryBezP4, 0, 0, 0);
 
-	gtk_box_pack_start_defaults(GTK_BOX(hbox3), entryBezP2);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox3), label3);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox3), entryBezP3);
+	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP2, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox3), label3, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3, 0, 0, 0);
 
-	gtk_box_pack_start_defaults(GTK_BOX(hbox4), startButton);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox4), entryBPM);
-	gtk_box_pack_start_defaults(GTK_BOX(hbox4), entrySnap);
+	gtk_box_pack_start(GTK_BOX(hbox4), startButton, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox4), entryBPM, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox4), entrySnap, 0, 0, 0);
 
 
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
