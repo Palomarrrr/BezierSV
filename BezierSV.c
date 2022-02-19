@@ -3,7 +3,7 @@
 #include <math.h>
 #include <gtk/gtk.h>
 
-GtkWidget *mainWindow, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP3, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4;
+GtkWidget *mainWindow, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP3, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
 
 
 
@@ -50,10 +50,12 @@ int main(int argc, char *argv[]) {
 	gtk_init(&argc, &argv);
 
 	mainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
 	entryStartTime = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryStartTime), "Start Tick");
 	entryEndTime = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryEndTime), "End Tick");
+
 	entryBezP1 = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP1), "Start");
 	entryBezP2 = gtk_entry_new();
@@ -62,13 +64,16 @@ int main(int argc, char *argv[]) {
 	gtk_entry_set_text(GTK_ENTRY(entryBezP3), "Ctrl 2");
 	entryBezP4 = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP4), "End");
+
 	entryBPM = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBPM), "BPM");
 	entrySnap = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(entrySnap), "1/x");
+	gtk_entry_set_text(GTK_ENTRY(entrySnap), "1/x (enter x)");
+
 	label = gtk_label_new("--Ticks->");
 	label2 = gtk_label_new("--General->");
 	label3 = gtk_label_new("--Controls->");
+
 	startButton = gtk_button_new_with_mnemonic("Start");
 
 
@@ -77,12 +82,15 @@ int main(int argc, char *argv[]) {
 	hbox2 = gtk_hbox_new(1, 0);
 	hbox3 = gtk_hbox_new(1, 0);
 	hbox4 = gtk_hbox_new(1, 0);
+	hbox5 = gtk_hbox_new(1, 0);
 	
 
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox1, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox2, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox3, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), hbox4, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(vbox1), hbox5, 0, 0, 0);
+
 	gtk_box_pack_start(GTK_BOX(hbox1), entryStartTime, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox1), label, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox1), entryEndTime, 0, 0, 0);
@@ -95,9 +103,10 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox3), label3, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3, 0, 0, 0);
 
-	gtk_box_pack_start(GTK_BOX(hbox4), startButton, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox4), entryBPM, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox4), entrySnap, 0, 0, 0);
+
+	gtk_box_pack_start(GTK_BOX(hbox5), startButton, 0, 0, 0);
 
 
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
