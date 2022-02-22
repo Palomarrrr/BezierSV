@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <math.h>
 #include <gtk/gtk.h>
 
-GtkWidget *mainWindow, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP3, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
+GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP3, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
 
 
 
@@ -32,7 +33,7 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 	 FILE *outputFile = fopen("SV.txt", "w");
 
-	 for( double i = 0.0; i <= 1; i += divs) {
+	 for( long double i = 0.0; i <= 1; i += divs) {
 
 	 	double sv = (1 - i) * (1 - i) * (1 - i) * bezPy[0] + 3 * (1 -   i) * (1 - i) * i * bezPy[1] + 3 * (1 - i) * i * i * bezPy[2] + i * i * i * bezPy[3];	
 
@@ -44,12 +45,27 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 	 fclose(outputFile);
 
+	#ifdef _WIN32
+	 system("notepad\\SV.txt\\");
+	#elif _WIN641
+	 system("notepad\\SV.txt\\");
+	#elif __linux__
+	 system("gedit SV.txt");
+	#elif __APPLE__
+	 printf("wtf");
+	#else
+	 printf("wtf");
+	#endif
+
 }
+
+
 
 int main(int argc, char *argv[]) {
 	gtk_init(&argc, &argv);
 
 	mainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	outptWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	entryStartTime = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryStartTime), "Start Tick");
@@ -108,11 +124,11 @@ int main(int argc, char *argv[]) {
 
 	gtk_box_pack_start(GTK_BOX(hbox5), startButton, 0, 0, 0);
 
-
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(startButton, "clicked", G_CALLBACK(bezSv), NULL);
 
 	gtk_container_add(GTK_CONTAINER(mainWindow), vbox1);
+	
 
 	gtk_widget_show_all(mainWindow);
 	gtk_main();
