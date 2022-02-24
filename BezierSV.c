@@ -4,18 +4,20 @@
 #include <math.h>
 #include <gtk/gtk.h>
 
-GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP3, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
+GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP2x, *entryBezP3, *entryBezP3x, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
 
 
 
 
 float bezSv(GtkWidget *widget, gpointer data) {
-	float bezPy[4];
+	float bezPy[4], bezPx[2];
 
 	 bezPy[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP1))); 
 	 bezPy[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2))); 
 	 bezPy[2] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3))); 
 	 bezPy[3] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP4))); 
+	 bezPx[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2x))); 
+	 bezPx[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3x))); 
 
 	 
 	 float startTk = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
@@ -23,23 +25,34 @@ float bezSv(GtkWidget *widget, gpointer data) {
 	 float BPM = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBPM)));
 	 int snap = atoi((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
 
-	 int incTk = 60000.0 / snap / BPM;
+	 double incTk = 60000.0 / snap / BPM;
 
 	 float svPoints = (endTk - startTk) / incTk;
 	
 	 long double divs = 1/svPoints;
 
-	 double currentTk = startTk;
-
 	 FILE *outputFile = fopen("SV.txt", "w");
 
-	 for( long double i = 0.0; i <= 1; i += divs) {
+	 for( long double i = 0.0; i <= 1 + divs; i += divs) {
 
-	 	double sv = (1 - i) * (1 - i) * (1 - i) * bezPy[0] + 3 * (1 -   i) * (1 - i) * i * bezPy[1] + 3 * (1 - i) * i * i * bezPy[2] + i * i * i * bezPy[3];	
+	 	long double sv = (1 - i) * (1 - i) * (1 - i) * bezPy[0] + 3 * (1 -   i) * (1 - i) * i * bezPy[1] + 3 * (1 - i) * i * i * bezPy[2] + i * i * i * bezPy[3];	
+	 	long double currentPt = (1 - i) * (1 - i) * (1 - i) * 0 + 3 * (1 -   i) * (1 - i) * i * bezPx[0] + 3 * (1 - i) * i * i * bezPx[1] + i * i * i * 1;	
 
-		fprintf(outputFile, "%0.lf,%lf,4,1,0,100,0,0\n", floor(currentTk), -100 / sv);
+		
+		double slope = endTk - startTk;
 
-		currentTk = currentTk + incTk;
+		long double currentTk = slope * currentPt + startTk;
+		long double actTk = slope * i + startTk;
+
+		//debugging
+		printf("%lf,%Lf,%Lf,%lf,%lf\n", round(currentTk), sv, currentPt, incTk, floor(actTk));
+
+		currentTk = currentTk + (actTk - currentTk);
+
+		fprintf(outputFile, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
+
+
+
 		
 	 }
 
@@ -47,7 +60,7 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 	#ifdef _WIN32
 	 system("notepad\\SV.txt\\");
-	#elif _WIN641
+	#elif _WIN64
 	 system("notepad\\SV.txt\\");
 	#elif __linux__
 	 system("gedit SV.txt");
@@ -75,9 +88,13 @@ int main(int argc, char *argv[]) {
 	entryBezP1 = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP1), "Start");
 	entryBezP2 = gtk_entry_new();
+	entryBezP2x = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP2), "Ctrl 1");
+	gtk_entry_set_text(GTK_ENTRY(entryBezP2x), "Ctrl 1 x (between 0 and 1)");
 	entryBezP3 = gtk_entry_new();
+	entryBezP3x = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP3), "Ctrl 2");
+	gtk_entry_set_text(GTK_ENTRY(entryBezP3x), "Ctrl 2 x val (between 0 and 1)");
 	entryBezP4 = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBezP4), "End");
 
@@ -116,8 +133,10 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox2), entryBezP4, 0, 0, 0);
 
 	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP2, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP2x, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox3), label3, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3x, 0, 0, 0);
 
 	gtk_box_pack_start(GTK_BOX(hbox4), entryBPM, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox4), entrySnap, 0, 0, 0);
