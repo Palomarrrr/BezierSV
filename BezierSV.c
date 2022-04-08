@@ -3,9 +3,53 @@
 #include <limits.h>
 #include <math.h>
 #include <gtk/gtk.h>
-#include <strings.h>
+#include <string.h>
+#include <unistd.h>
+#define MAX_BUFF 200
 
-GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP2x, *entryBezP3, *entryBezP3x, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5;
+/* 
+WARNING THIS PROGRAM DEPENDS ON FEH AND GEDIT IF YOU ARE ON LINUX
+PLEASE INSTALL THESE PROGRAMS IN ORDER FOR THE APP TO WORK PROPERLY
+*/
+
+
+GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP2x, *entryBezP3, *entryBezP3x, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5, *graphButton, *showButton;
+char path[MAX_BUFF];
+
+void displayGraph() {
+	#ifdef _WIN32
+		// Im not 100% sure how to execute this on windows so itll be a bit till i get this done
+		system();
+	#elif _WIN64
+		// Look at the comment above
+		system();
+	#elif __linux__
+		getcwd(path, MAX_BUFF);
+		strcat(path, "/OTFGraph");
+		system(path);
+		system("feh SVPlot.png");
+	#elif __APPLE__
+		printf("applerss");
+	#else
+		printf("WTF ARE YOU USING");
+	#endif
+}
+
+
+
+void openFile() {
+	#ifdef _WIN32
+	 system("notepad SV.txt");
+	#elif _WIN64
+	 system("notepad SV.txt");
+	#elif __linux__
+	 system("gedit SV.txt");
+	#elif __APPLE__
+	 printf("applerss");
+	#else
+	 printf("wtf are you using???????");
+	#endif
+}
 
 int getDenom(char *snapping){
 	float snap; 
@@ -55,9 +99,7 @@ float bezSv(GtkWidget *widget, gpointer data) {
 	 bezPx[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3x))); 
 
 	 
-	 //float startTk = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
 	 float startTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
-	 //float endTk = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryEndTime)));
 	 float endTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryEndTime)));
 	 float BPM = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBPM)));
 	 float snap = getDenom((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
@@ -68,7 +110,8 @@ float bezSv(GtkWidget *widget, gpointer data) {
 	
 	 long double divs = 1/svPoints;
 
-	 FILE *outputFile = fopen("SV.txt", "w");
+	 FILE *outputFileForGraph = fopen("SVPlot.txt", "w"); // This is the output file for OTFGraph because im lazy and dont want to do something smarter
+	 FILE *outputFileForNP = fopen("SV.txt", "w"); // This is the txt file that will open in notepad
 
 	 for( long double i = 0.0; i <= 1 + divs; i += divs) {
 
@@ -83,25 +126,16 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 		currentTk = currentTk + (actTk - currentTk);
 
-		fprintf(outputFile, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
+		fprintf(outputFileForGraph, "%0.lf,%Lf\n", floor(currentTk), -100.0 / sv);
+		fprintf(outputFileForNP, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
 
-	 }
+	}
 
-	 fclose(outputFile);
-
-	#ifdef _WIN32
-	 system("notepad SV.txt");
-	#elif _WIN64
-	 system("notepad SV.txt");
-	#elif __linux__
-	 system("gedit SV.txt");
-	#elif __APPLE__
-	 printf("Get a real pc");
-	#else
-	 printf("wtf are you using???????");
-	#endif
-
+	fclose(outputFileForGraph);
+	fclose(outputFileForNP);
 }
+
+
 
 
 
@@ -136,7 +170,9 @@ int main(int argc, char *argv[]) {
 	label2 = gtk_label_new("--SV->");
 	label3 = gtk_label_new("--Ctrls->");
 
-	startButton = gtk_button_new_with_label("Start");
+	graphButton = gtk_button_new_with_label ("Show Graph");
+	showButton = gtk_button_new_with_label ("Open File");
+	startButton = gtk_button_new_with_label ("Run Function");
 
 
 	vbox1 = gtk_vbox_new(1, 0);
@@ -170,16 +206,20 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox4), entryBPM, 0, 0, 5);
 	gtk_box_pack_start(GTK_BOX(hbox4), entrySnap, 0, 0, 5);
 
+	gtk_box_pack_start(GTK_BOX(hbox5), graphButton, 0, 0, 5);
 	gtk_box_pack_start(GTK_BOX(hbox5), startButton, 0, 0, 5);
+	gtk_box_pack_start(GTK_BOX(hbox5), showButton, 0, 0, 5);
 
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(showButton, "clicked", G_CALLBACK(openFile), NULL);
 	g_signal_connect(startButton, "clicked", G_CALLBACK(bezSv), NULL);
+	g_signal_connect(graphButton, "clicked", G_CALLBACK(displayGraph), NULL);
+
 
 	gtk_container_add(GTK_CONTAINER(mainWindow), vbox1);
 	
 
 	gtk_widget_show_all(mainWindow);
-	gtk_window_resize(GTK_WINDOW(mainWindow), 200, 200);
 
 	gtk_main();
 	return 0;
