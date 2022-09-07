@@ -7,9 +7,16 @@
 #include <unistd.h>
 #define MAX_BUFF 200
 
+#ifdef _WIN32
+	#include <windows.h>
+#elif _WIN64
+	#include <windows.h>
+#else
+#endif
+
 /* 
-WARNING THIS PROGRAM DEPENDS ON FEH AND GEDIT IF YOU ARE ON LINUX
-PLEASE INSTALL THESE PROGRAMS IN ORDER FOR THE APP TO WORK PROPERLY
+WARNING THIS PROGRAM DEPENDS ON GEDIT IF YOU ARE ON LINUX
+PLEASE INSTALL THIS PROGRAM IN ORDER FOR THE APP TO WORK PROPERLY
 */
 
 
@@ -18,16 +25,17 @@ char path[MAX_BUFF];
 
 void displayGraph() {
 	#ifdef _WIN32
-		// Im not 100% sure how to execute this on windows so itll be a bit till i get this done
-		system();
+		getcwd(path, MAX_BUFF);
+		strcat(path, "/SVGraph");
+		system(path);
 	#elif _WIN64
-		// Look at the comment above
-		system();
+		getcwd(path, MAX_BUFF);
+		strcat(path, "/SVGraph");
+		system(path);
 	#elif __linux__
 		getcwd(path, MAX_BUFF);
-		strcat(path, "/OTFGraph");
+		strcat(path, "/SVGraph");
 		system(path);
-		system("feh SVPlot.png");
 	#elif __APPLE__
 		printf("applerss");
 	#else
@@ -51,21 +59,6 @@ void openFile() {
 	#endif
 }
 
-int getDenom(char *snapping){
-	float snap; 
-	char *snapChar[2];
-	char *token;
-	int i = 0;
-
-	while((token = strtok_r(snapping, "/", &snapping))) { 
-		snapChar[i] = token;
-		i++;
-	}
-	
-	snap = atof(snapChar[1]);
-
-	return snap;
-}
 
 int timeToTick(char *time){
 	int tick;
@@ -102,7 +95,7 @@ float bezSv(GtkWidget *widget, gpointer data) {
 	 float startTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
 	 float endTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryEndTime)));
 	 float BPM = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBPM)));
-	 float snap = getDenom((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
+	 float snap = atof((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
 
 	 double incTk = 60000.0 / snap / BPM;
 
@@ -126,10 +119,10 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 		currentTk = currentTk + (actTk - currentTk);
 
-		fprintf(outputFileForGraph, "%0.lf,%Lf\n", floor(currentTk), -100.0 / sv);
+		fprintf(outputFileForGraph, "%0.lf,%Lf\n", floor(currentTk), sv);
 		fprintf(outputFileForNP, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
 
-	}
+	 }
 
 	fclose(outputFileForGraph);
 	fclose(outputFileForNP);
