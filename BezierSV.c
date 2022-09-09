@@ -21,8 +21,8 @@ PLEASE INSTALL THIS PROGRAM IN ORDER FOR THE APP TO WORK PROPERLY
 */
 
 typedef struct dataSet{
-        double *x;
-        double *y;
+        long double *x;
+        long double *y;
         unsigned int len;
 }dataSet;
 
@@ -44,6 +44,10 @@ int timeToTick(char *time){
 		n++;
 	}
 
+	if(!strcmp(ticks[2], "xxx")){
+		return 0;
+	}
+
 	tick = atoi(ticks[2]);
 	int tickS = atoi(ticks[1]);
 	int tickM = atoi (ticks[0]);
@@ -51,111 +55,18 @@ int timeToTick(char *time){
 	tick = tick + (tickS * 1000);
 	tick = tick + (tickM * 60000);
 
+
 	return tick;
 }
 
-float bezSv(GtkWidget *widget, gpointer data) {
-	float bezPy[4], bezPx[2];
-
-	 bezPy[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP1))); 
-	 bezPy[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2))); 
-	 bezPy[2] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3))); 
-	 bezPy[3] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP4))); 
-	 bezPx[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2x))); 
-	 bezPx[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3x))); 
-
-	 
-	 float startTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
-	 float endTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryEndTime)));
-	 float BPM = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBPM)));
-	 float snap = atof((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
-
-	 double incTk = 60000.0 / snap / BPM;
-
-	 float svPoints = (endTk - startTk) / incTk;
-	
-	 long double divs = 1/svPoints;
-
-	 FILE *outputFileForGraph = fopen("SVPlot.txt", "w"); // This is the output file for OTFGraph because im lazy and dont want to do something smarter
-	 FILE *outputFileForNP = fopen("SV.txt", "w"); // This is the txt file that will open in notepad
-
-	 for( long double i = 0.0; i <= 1 + divs; i += divs) {
-
-	 	long double sv = (1 - i) * (1 - i) * (1 - i) * bezPy[0] + 3 * (1 -   i) * (1 - i) * i * bezPy[1] + 3 * (1 - i) * i * i * bezPy[2] + i * i * i * bezPy[3];	
-	 	long double currentPt = (1 - i) * (1 - i) * (1 - i) * 0 + 3 * (1 -   i) * (1 - i) * i * bezPx[0] + 3 * (1 - i) * i * i * bezPx[1] + i * i * i * 1;	
-
-		
-		double slope = endTk - startTk;
-		long double currentTk = slope * currentPt + startTk;
-		long double actTk = slope * i + startTk;
-
-		currentTk = currentTk + (actTk - currentTk);
-
-		fprintf(outputFileForGraph, "%0.lf,%Lf\n", floor(currentTk), sv);
-		fprintf(outputFileForNP, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
-
-	 }
-
-	fclose(outputFileForGraph);
-	fclose(outputFileForNP);
-}
-
-int splitFile(){
-
-	FILE *svfile;
-	svfile = fopen("SVPlot.txt", "r");
-
-	if(svfile == NULL)
-		return 1;
-
-        dataSet set;
-        double *xpoints = malloc(50000 * sizeof(double));
-        double *ypoints = malloc(50000 * sizeof(double));
-        char *eptr;
-
-        int i = 0, currChar, iX = 0, iY = 0, len = 0;
-
-        char *tmpBuff = malloc(50000* sizeof(char));
-        memset(tmpBuff, 0, sizeof(char) * 50000);
-
-        do{
-                if((char)currChar == ','){
-                        xpoints[iX] = strtod(tmpBuff, &eptr);
-                        iX++;
-                        i = 0;
-                        len++;
-                        memset(tmpBuff, 0, sizeof(char) * 50000);
-                }else if((char)currChar == '\n'){
-                        ypoints[iY] = strtod(tmpBuff, &eptr);
-                        iY++;
-                        i = 0;
-                        memset(tmpBuff, 0, sizeof(char) * 50000);
-                }else if(isdigit((char)currChar) || (char)currChar == '.'){
-                        tmpBuff[i] = (char)currChar;
-                        i++;
-                }else{
-                        tmpBuff[i] = ' ';
-                }
-
-
-        }while((currChar = fgetc(svfile)) != EOF);
-
-        xyVals.len = len;
-        xyVals.x = xpoints;
-        xyVals.y = ypoints;                                                                                                              
-
-	fclose(svfile);
-
-	return 0;
-}                                           
 
 void openFile() {
 	#ifdef _WIN32
-	 system("notepad SV.txt");
+	 system("notepad SV.txt &");
 	#elif _WIN64
-	 system("notepad SV.txt");
+	 system("notepad SV.txt &");
 	#elif __linux__
-	 system("gedit SV.txt");
+	 system("gedit SV.txt &");
 	#elif __APPLE__
 	 printf("applerss");
 	#else
@@ -233,20 +144,74 @@ static gboolean drawGraph(GtkWidget *widget, cairo_t *cr, gpointer user_data){
         return FALSE;
 }
 
-void displayGraph(GtkWidget *widget, gpointer data) {
+int bezSv(GtkWidget *widget, gpointer data) {
+
+	float bezPy[4], bezPx[2];
 
 	if(xyVals.x != NULL){
         	memset(xyVals.x, 0, sizeof(double) * 50000);
         	memset(xyVals.y, 0, sizeof(double) * 50000);
+	}else{
+        	xyVals.x = malloc(50000 * sizeof(double));
+        	xyVals.y = malloc(50000 * sizeof(double));
 	}
 
-	splitFile();
+	bezPy[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP1)));
+	bezPy[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2)));
+	bezPy[2] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3))); 
+	bezPy[3] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP4))); 
+	bezPx[0] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP2x))); 
+	bezPx[1] = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBezP3x))); 
+
+	float startTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryStartTime)));
+	float endTk = timeToTick((char *)gtk_entry_get_text(GTK_ENTRY(entryEndTime)));
+	float BPM = atof((char *)gtk_entry_get_text(GTK_ENTRY(entryBPM)));
+	float snap = atof((char *)gtk_entry_get_text(GTK_ENTRY(entrySnap)));
+
+	if(startTk == 0 || endTk == 0){
+		return 1;
+	}
+
+
+	double incTk = 60000.0 / snap / BPM;
+
+	float svPoints = (endTk - startTk) / incTk;
+	
+	long double divs = 1/svPoints;
+
+	FILE *outputFileForNP = fopen("SV.txt", "w"); // This is the txt file that will open in notepad
+	int itr = 0;
+
+	for( long double i = 0.0; i <= 1 + divs; i += divs) {
+	
+		long double sv = (1 - i) * (1 - i) * (1 - i) * bezPy[0] + 3 * (1 -   i) * (1 - i) * i * bezPy[1] + 3 * (1 - i) * i * i * bezPy[2] + i * i * i * bezPy[3];	
+	 	long double currentPt = (1 - i) * (1 - i) * (1 - i) * 0 + 3 * (1 -   i) * (1 - i) * i * bezPx[0] + 3 * (1 - i) * i * i * bezPx[1] + i * i * i * 1;	
+
+		
+		double slope = endTk - startTk;
+		long double currentTk = slope * currentPt + startTk;
+		long double actTk = slope * i + startTk;
+
+		currentTk = currentTk + (actTk - currentTk);
+
+		xyVals.x[itr] = floor(currentTk);
+		xyVals.y[itr] = sv;
+
+		fprintf(outputFileForNP, "%0.lf,%Lf,4,1,0,100,0,0\n", floor(currentTk), -100.0 / sv);
+
+		itr++;
+	}
+
+	fclose(outputFileForNP);
+
+	xyVals.len = itr;
+	gtk_widget_show(showButton);
 	gtk_widget_queue_draw(graphSurface);
+
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
-
-	splitFile();
 
 	gtk_init(&argc, &argv);
 
@@ -278,11 +243,10 @@ int main(int argc, char *argv[]) {
 	label = gtk_label_new("--Time->");
 	label2 = gtk_label_new("--SV->");
 	label3 = gtk_label_new("--Ctrls->");
-	label4 = gtk_label_new("--Ctrls->");
+	label4 = gtk_label_new("--Xvals->");
 
-	graphButton = gtk_button_new_with_label("Show Graph");
-	showButton = gtk_button_new_with_label("Open File");
 	startButton = gtk_button_new_with_label("Run Function");
+	showButton = gtk_button_new_with_label("Open File");
 
 	graphSurface = gtk_drawing_area_new();
 	gtk_widget_set_size_request(graphSurface, 640, 480);
@@ -293,7 +257,6 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(showButton, "clicked", G_CALLBACK(openFile), NULL);
 	g_signal_connect(startButton, "clicked", G_CALLBACK(bezSv), NULL);
-	g_signal_connect(graphButton, "clicked", G_CALLBACK(displayGraph), NULL);
 	g_signal_connect(G_OBJECT(graphSurface), "draw", G_CALLBACK(drawGraph), NULL);
 
 	vbox1 = gtk_vbox_new(0, 0);
@@ -307,16 +270,16 @@ int main(int argc, char *argv[]) {
 	gtk_grid_attach(GTK_GRID(grid1), entryStartTime, 1, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), label, 2, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), entryEndTime, 3, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid1), graphButton, 4, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), startButton, 4, 0, 1, 1);
 
 	gtk_grid_attach(GTK_GRID(grid1), entryBezP1, 1, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), label2, 2, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), entryBezP4, 3, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), showButton, 4, 1, 1, 1);
 
 	gtk_grid_attach(GTK_GRID(grid1), entryBezP2, 1, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), label3, 2, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), entryBezP3, 3, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid1), startButton, 4, 2, 1, 1);
 
 	gtk_grid_attach(GTK_GRID(grid1), entryBezP2x, 1, 3, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), label4, 2, 3, 1, 1);
@@ -324,12 +287,11 @@ int main(int argc, char *argv[]) {
 
 	gtk_grid_attach(GTK_GRID(grid1), entryBPM, 1, 4, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid1), entrySnap, 3, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid1), showButton, 4, 4, 1, 1);
-
 
 	gtk_container_add(GTK_CONTAINER(mainWindow), vbox1);
 
 	gtk_widget_show_all(mainWindow);
+	gtk_widget_hide(showButton);
 
 	gtk_main();
 
