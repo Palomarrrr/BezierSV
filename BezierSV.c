@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
@@ -19,45 +20,17 @@ WARNING THIS PROGRAM DEPENDS ON GEDIT IF YOU ARE ON LINUX
 PLEASE INSTALL THIS PROGRAM IN ORDER FOR THE APP TO WORK PROPERLY
 */
 
+typedef struct dataSet{
+        double *x;
+        double *y;
+        unsigned int len;
+}dataSet;
 
-GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP2x, *entryBezP3, *entryBezP3x, *entryBPM, *entrySnap, *startButton, *label, *label2, *vbox1, *hbox1, *hbox2, *hbox3, *label3, *hbox4, *hbox5, *graphButton, *showButton;
+
+GtkWidget *mainWindow, *outptWindow, *outptBox, *entryStartTime, *entryEndTime, *entryBezP1, *entryBezP4, *entryBezP2, *entryBezP2x, *entryBezP3, *entryBezP3x, *entryBPM, *entrySnap, *startButton, *label, *label2, *label3, *label4, *vbox1, *grid1, *graphButton, *showButton, *graphSurface;
 char path[MAX_BUFF];
+dataSet xyVals;
 
-void displayGraph() {
-	#ifdef _WIN32
-		getcwd(path, MAX_BUFF);
-		strcat(path, "/SVGraph");
-		system(path);
-	#elif _WIN64
-		getcwd(path, MAX_BUFF);
-		strcat(path, "/SVGraph");
-		system(path);
-	#elif __linux__
-		getcwd(path, MAX_BUFF);
-		strcat(path, "/SVGraph");
-		system(path);
-	#elif __APPLE__
-		printf("applerss");
-	#else
-		printf("WTF ARE YOU USING");
-	#endif
-}
-
-
-
-void openFile() {
-	#ifdef _WIN32
-	 system("notepad SV.txt");
-	#elif _WIN64
-	 system("notepad SV.txt");
-	#elif __linux__
-	 system("gedit SV.txt");
-	#elif __APPLE__
-	 printf("applerss");
-	#else
-	 printf("wtf are you using???????");
-	#endif
-}
 
 
 int timeToTick(char *time){
@@ -113,7 +86,6 @@ float bezSv(GtkWidget *widget, gpointer data) {
 
 		
 		double slope = endTk - startTk;
-
 		long double currentTk = slope * currentPt + startTk;
 		long double actTk = slope * i + startTk;
 
@@ -128,14 +100,158 @@ float bezSv(GtkWidget *widget, gpointer data) {
 	fclose(outputFileForNP);
 }
 
+int splitFile(){
+
+	FILE *svfile;
+	svfile = fopen("SVPlot.txt", "r");
+
+	if(svfile == NULL)
+		return 1;
+
+        dataSet set;
+        double *xpoints = malloc(50000 * sizeof(double));
+        double *ypoints = malloc(50000 * sizeof(double));
+        char *eptr;
+
+        int i = 0, currChar, iX = 0, iY = 0, len = 0;
+
+        char *tmpBuff = malloc(50000* sizeof(char));
+        memset(tmpBuff, 0, sizeof(char) * 50000);
+
+        do{
+                if((char)currChar == ','){
+                        xpoints[iX] = strtod(tmpBuff, &eptr);
+                        iX++;
+                        i = 0;
+                        len++;
+                        memset(tmpBuff, 0, sizeof(char) * 50000);
+                }else if((char)currChar == '\n'){
+                        ypoints[iY] = strtod(tmpBuff, &eptr);
+                        iY++;
+                        i = 0;
+                        memset(tmpBuff, 0, sizeof(char) * 50000);
+                }else if(isdigit((char)currChar) || (char)currChar == '.'){
+                        tmpBuff[i] = (char)currChar;
+                        i++;
+                }else{
+                        tmpBuff[i] = ' ';
+                }
+
+
+        }while((currChar = fgetc(svfile)) != EOF);
+
+        xyVals.len = len;
+        xyVals.x = xpoints;
+        xyVals.y = ypoints;                                                                                                              
+
+	fclose(svfile);
+
+	return 0;
+}                                           
+
+void openFile() {
+	#ifdef _WIN32
+	 system("notepad SV.txt");
+	#elif _WIN64
+	 system("notepad SV.txt");
+	#elif __linux__
+	 system("gedit SV.txt");
+	#elif __APPLE__
+	 printf("applerss");
+	#else
+	 printf("wtf are you using???????");
+	#endif
+}
+
+static gboolean drawGraph(GtkWidget *widget, cairo_t *cr, gpointer user_data){
+
+        GdkRectangle surface;
+        GdkWindow *window = gtk_widget_get_window(widget);
+        gdouble dx = 5.0, dy = 5.0, clipX1, clipY1, clipX2, clipY2, i;
+
+	gdk_window_get_geometry(window, &surface.x, &surface.y, &surface.width, &surface.height);
+
+        cairo_set_source_rgb(cr, 1.0, 1.0, 0.95);
+        cairo_paint(cr);
+
+        cairo_translate(cr, surface.width / 2, surface.height / 2);
+        cairo_scale(cr, 100.0, -100.0);
+
+        cairo_device_to_user_distance(cr, &dx, &dy);
+        cairo_clip_extents(cr, &clipX1, &clipY1, &clipX2, &clipY2);
+        cairo_set_line_width(cr, dx);
 
 
 
+        //drawing axes
+        cairo_set_source_rgb(cr, 0, 0, 0);
+        cairo_move_to(cr, -3.18,2.4);
+        cairo_line_to(cr, -3.18,-2.4);
+        cairo_move_to(cr, -3.2,-2.39);
+        cairo_line_to(cr, 3.2,-2.39);
+        cairo_stroke(cr);
+
+        dx = 1.0;
+        dy = 1.0;
+
+        cairo_device_to_user_distance(cr, &dx, &dy);
+        cairo_set_line_width(cr, dx);
+        for(double i = -3.16; i < 3.2; i+=0.2){
+                cairo_move_to(cr, i, 2.4);
+                cairo_line_to(cr, i, -2.4);
+        }
+
+        for(double i = -2.36; i < 2.4; i+=0.2){
+                cairo_move_to(cr, -3.2, i);
+                cairo_line_to(cr, 3.2, i);
+        }
+        cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.3);
+        cairo_stroke(cr);
+
+	if(xyVals.x == NULL)
+		return FALSE;
+	
+
+        //drawing the line
+        dx = 1.0;
+        dy = 1.0;
+
+        cairo_device_to_user_distance(cr, &dx, &dy);
+        cairo_set_line_width(cr, dx);
+
+        int itr = 0;
+        double expander = (640.0/xyVals.len);
+
+        for(i = clipX1; i < clipX2; i+=dx * expander){
+                cairo_line_to(cr, i, xyVals.y[itr] - 1);
+                itr++;
+        }
+
+        cairo_set_source_rgba(cr, 0, 0, 1, 0.8);
+        cairo_stroke(cr);
+
+        return FALSE;
+}
+
+void displayGraph(GtkWidget *widget, gpointer data) {
+
+	if(xyVals.x != NULL){
+        	memset(xyVals.x, 0, sizeof(double) * 50000);
+        	memset(xyVals.y, 0, sizeof(double) * 50000);
+	}
+
+	splitFile();
+	gtk_widget_queue_draw(graphSurface);
+}
 
 int main(int argc, char *argv[]) {
+
+	splitFile();
+
 	gtk_init(&argc, &argv);
 
 	mainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(mainWindow), "SV Graph");
 
 	entryStartTime = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryStartTime), "x:xx:xxx");
@@ -157,63 +273,65 @@ int main(int argc, char *argv[]) {
 
 	entryBPM = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entryBPM), "BPM");
-	entrySnap = gtk_entry_new(); gtk_entry_set_text(GTK_ENTRY(entrySnap), "1/x");
+	entrySnap = gtk_entry_new(); gtk_entry_set_text(GTK_ENTRY(entrySnap), "Snap");
 
 	label = gtk_label_new("--Time->");
 	label2 = gtk_label_new("--SV->");
 	label3 = gtk_label_new("--Ctrls->");
+	label4 = gtk_label_new("--Ctrls->");
 
-	graphButton = gtk_button_new_with_label ("Show Graph");
-	showButton = gtk_button_new_with_label ("Open File");
-	startButton = gtk_button_new_with_label ("Run Function");
+	graphButton = gtk_button_new_with_label("Show Graph");
+	showButton = gtk_button_new_with_label("Open File");
+	startButton = gtk_button_new_with_label("Run Function");
 
-
-	vbox1 = gtk_vbox_new(1, 0);
-	hbox1 = gtk_hbox_new(1, 0);
-	hbox2 = gtk_hbox_new(1, 0);
-	hbox3 = gtk_hbox_new(1, 0);
-	hbox4 = gtk_hbox_new(1, 0);
-	hbox5 = gtk_hbox_new(1, 0);
+	graphSurface = gtk_drawing_area_new();
+	gtk_widget_set_size_request(graphSurface, 640, 480);
 	
 
-	gtk_box_pack_start(GTK_BOX(vbox1), hbox1, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(vbox1), hbox2, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(vbox1), hbox3, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(vbox1), hbox4, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(vbox1), hbox5, 0, 0, 0);
-
-	gtk_box_pack_start(GTK_BOX(hbox1), entryStartTime, 0, 1, 5);
-	gtk_box_pack_start(GTK_BOX(hbox1), label, 0, 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox1), entryEndTime, 0, 1, 5);
-
-	gtk_box_pack_start(GTK_BOX(hbox2), entryBezP1, 0, 1, 5);
-	gtk_box_pack_start(GTK_BOX(hbox2), label2, 0, 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox2), entryBezP4, 0, 1, 5);
-
-	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP2, 1, 1, 5);
-	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP2x, 1, 1, 5);
-	gtk_box_pack_start(GTK_BOX(hbox3), label3, 1, 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3, 1, 1, 5);
-	gtk_box_pack_start(GTK_BOX(hbox3), entryBezP3x, 1, 1, 5);
-
-	gtk_box_pack_start(GTK_BOX(hbox4), entryBPM, 0, 0, 5);
-	gtk_box_pack_start(GTK_BOX(hbox4), entrySnap, 0, 0, 5);
-
-	gtk_box_pack_start(GTK_BOX(hbox5), graphButton, 0, 0, 5);
-	gtk_box_pack_start(GTK_BOX(hbox5), startButton, 0, 0, 5);
-	gtk_box_pack_start(GTK_BOX(hbox5), showButton, 0, 0, 5);
+	gtk_container_set_border_width(GTK_CONTAINER(mainWindow), 3);
 
 	g_signal_connect(mainWindow, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(showButton, "clicked", G_CALLBACK(openFile), NULL);
 	g_signal_connect(startButton, "clicked", G_CALLBACK(bezSv), NULL);
 	g_signal_connect(graphButton, "clicked", G_CALLBACK(displayGraph), NULL);
+	g_signal_connect(G_OBJECT(graphSurface), "draw", G_CALLBACK(drawGraph), NULL);
+
+	vbox1 = gtk_vbox_new(0, 0);
+	grid1 = gtk_grid_new();
+
+	gtk_grid_set_row_homogeneous(GTK_GRID(grid1), TRUE);
+
+	gtk_box_pack_start(GTK_BOX(vbox1), graphSurface, 0, 1, 0);
+	gtk_box_pack_start(GTK_BOX(vbox1), grid1, 1, 1, 0);
+
+	gtk_grid_attach(GTK_GRID(grid1), entryStartTime, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), label, 2, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), entryEndTime, 3, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), graphButton, 4, 0, 1, 1);
+
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP1, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), label2, 2, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP4, 3, 1, 1, 1);
+
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP2, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), label3, 2, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP3, 3, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), startButton, 4, 2, 1, 1);
+
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP2x, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), label4, 2, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), entryBezP3x, 3, 3, 1, 1);
+
+	gtk_grid_attach(GTK_GRID(grid1), entryBPM, 1, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), entrySnap, 3, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid1), showButton, 4, 4, 1, 1);
 
 
 	gtk_container_add(GTK_CONTAINER(mainWindow), vbox1);
-	
 
 	gtk_widget_show_all(mainWindow);
 
 	gtk_main();
+
 	return 0;
 }
