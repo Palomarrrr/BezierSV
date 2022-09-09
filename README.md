@@ -21,9 +21,11 @@ If you are not familiar with Bezier Curves, it is a mathematical way to describe
 To start, enter your start and end time in the first two boxes.
 
 Then add your starting and ending SV. These will be the two endpoints of your curve and are represented by the blue dots in desmos.
+
 ![blue dots](https://i.imgur.com/iVF3Rpm.png)
 
 Next will be your two control points. In the desmos page, these are represented by the black dots.
+
 ![black dots](https://i.imgur.com/kbT5RnP.png)
 
 Below them is the control points X values. Currently this is measured by a number between 0 and 1 with 0 being the beginning of the SV and 1 being the end. I plan on making this more intuitive later.
