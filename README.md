@@ -10,9 +10,12 @@ I do not personally use Windows so please let me know of any instabilities that 
 
 If you are compiling the tool from source code use the provided Makefile.
 I'm not sure how to compile this on windows so help with that would be great.
+For now, Windows compilation is set up to work on my system only and is just for making the binaries.
 For Linux, make sure you have GTK+3.0 and Gedit installed then type `make linux` 
 
 ## How to use
+
+THIS DESCRIPTION IS NOW OLD DUE TO SOME RECENT CHANGES. I WILL EDIT THIS SOON
 
 Using the tool should be simple 
 
